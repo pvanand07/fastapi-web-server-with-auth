@@ -30,7 +30,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 JWT_SECRET = os.getenv("JWT_SECRET")
 
 # URL variables
-APP_URL = 'https://www.app.com'
+APP_URL = 'https://multi-agent-research.vercel.app/'
 
 # Initialize Supabase client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
