@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Response
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from supabase import create_client
@@ -30,8 +30,6 @@ JWT_SECRET = os.getenv("JWT_SECRET")
 
 # URL variables
 APP_URL = 'https://www.app.com'
-WAITLIST_URL = 'https://www.waitlist.com'
-LOGIN_URL = 'https://www.login.com'
 
 # Initialize Supabase client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
@@ -52,10 +50,20 @@ def verify_jwt(token):
 class TokenRequest(BaseModel):
     token: str
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     logging.debug("Rendering index.html")
     return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/login", response_class=HTMLResponse)
+async def login(request: Request):
+    logging.debug("Rendering login.html")
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@app.get("/waitlist", response_class=HTMLResponse)
+async def waitlist(request: Request):
+    logging.debug("Rendering waitlist.html")
+    return templates.TemplateResponse("waitlist.html", {"request": request})
 
 @app.post("/check_status")
 async def check_status(token_request: TokenRequest, response: Response):
@@ -65,7 +73,7 @@ async def check_status(token_request: TokenRequest, response: Response):
     
     if not token:
         logging.debug("No token provided, redirecting to login")
-        return JSONResponse(content={'url': LOGIN_URL})
+        return JSONResponse(content={'route': '/login'})
 
     jwt_payload = verify_jwt(token)
     if jwt_payload:
@@ -73,20 +81,20 @@ async def check_status(token_request: TokenRequest, response: Response):
         if jwt_payload.get('authenticated') and jwt_payload.get('valid'):
             return JSONResponse(content={'url': APP_URL})
         elif jwt_payload.get('authenticated') and not jwt_payload.get('valid'):
-            return JSONResponse(content={'url': WAITLIST_URL})
+            return JSONResponse(content={'route': '/waitlist'})
         else:
-            return JSONResponse(content={'url': LOGIN_URL})
+            return JSONResponse(content={'route': '/login'})
 
     try:
         user_email = jwt.decode(token, options={"verify_signature": False})['email']
         logging.debug(f"Decoded email from token: {user_email}")
     except:
         logging.debug("Failed to decode email from token")
-        return JSONResponse(content={'url': LOGIN_URL})
+        return JSONResponse(content={'route': '/login'})
 
     if not user_email:
         logging.debug("No email in token")
-        return JSONResponse(content={'url': LOGIN_URL})
+        return JSONResponse(content={'route': '/login'})
 
     logging.debug("Checking email in Supabase")
     response = supabase.table('email_allowlist').select('email').eq('email', user_email).execute()
@@ -98,14 +106,14 @@ async def check_status(token_request: TokenRequest, response: Response):
     logging.debug(f"Created new token: {new_token}")
     
     if user_authenticated and user_valid:
-        url = APP_URL
+        content = {'url': APP_URL}
     elif user_authenticated and not user_valid:
-        url = WAITLIST_URL
+        content = {'route': '/waitlist'}
     else:
-        url = LOGIN_URL
-    logging.debug(f"Redirecting to: {url}")
+        content = {'route': '/login'}
+
+    logging.debug(f"Redirecting to: {content}")
     
-    content = {'url': url, 'token': new_token}
     response = JSONResponse(content=content)
     response.set_cookie(key='auth_token', value=new_token, httponly=True, secure=True, samesite='strict', max_age=86400)
     return response
