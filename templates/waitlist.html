@@ -3,10 +3,224 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waitlist</title>
+    <title>Elevatics AI App Hub - Waiting List</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f0f4f8;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+            padding: 2rem;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 20px;
+            overflow: hidden;
+            width: 100%;
+            max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .title {
+            font-weight: 700;
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, #6a91d3, #0b8764);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: #5a6c7f;
+        }
+
+        .waiting-number {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #3b82f6;
+            margin: 2rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e7ff;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .progress {
+            width: 30%;
+            height: 100%;
+            background: linear-gradient(45deg, #3b82f6, #10b981);
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .features {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 3rem;
+        }
+
+        .feature {
+            flex: 1;
+            padding: 1rem;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #3498db;
+        }
+
+        .feature-description {
+            font-size: 0.9rem;
+            color: #5a6c7f;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #3b82f6, #10b981);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-top: 2rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 16px;
+            border-radius: 4px;
+            text-align: center;
+            z-index: 1;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .toast.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .features {
+                flex-direction: column;
+            }
+            .feature {
+                margin-bottom: 2rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>Waitlist Page</h1>
-    <!-- Add your waitlist content here -->
+    <div class="container">
+        <h1 class="title">Welcome to the Elevatics AI Hub Waiting List</h1>
+        <p class="subtitle">You're on your way to revolutionizing your research!</p>
+        
+        <div class="waiting-number">
+            #42
+        </div>
+        <p>Your position in the waiting list</p>
+        
+        <div class="progress-bar">
+            <div class="progress"></div>
+        </div>
+        <p>Estimated time until access: 2 weeks</p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🚀</div>
+                <h3 class="feature-title">Early Access</h3>
+                <p class="feature-description">Be among the first to experience our cutting-edge AI research tools.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎁</div>
+                <h3 class="feature-title">Exclusive Perks</h3>
+                <p class="feature-description">Enjoy special features and bonuses as an early adopter.</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">📈</div>
+                <h3 class="feature-title">Rapid Growth</h3>
+                <p class="feature-description">Watch your research efficiency skyrocket with our AI-powered assistant.</p>
+            </div>
+        </div>
+        
+        <button id="referButton" class="cta-button">Refer a Friend</button>
+    </div>
+
+    <div id="toast" class="toast">Link copied to clipboard!</div>
+
+    <script>
+        // Animate progress bar
+        window.onload = function() {
+            const progress = document.querySelector('.progress');
+            let width = 0;
+            const id = setInterval(frame, 20);
+            function frame() {
+                if (width >= 30) {
+                    clearInterval(id);
+                } else {
+                    width++;
+                    progress.style.width = width + '%';
+                }
+            }
+        }
+
+        // Refer a Friend functionality
+        document.getElementById('referButton').addEventListener('click', function() {
+            const link = "https://www.elevatics.co/";
+            navigator.clipboard.writeText(link).then(function() {
+                showToast();
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        function showToast() {
+            const toast = document.getElementById("toast");
+            toast.className = "toast show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+    </script>
 </body>
 </html>
