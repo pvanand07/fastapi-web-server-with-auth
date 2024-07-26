@@ -60,6 +60,7 @@ async def google_auth_url():
     }
     query_string = "&".join([f"{k}={v}" for k, v in params.items()])
     auth_url = f"{SUPABASE_URL}/auth/v1/authorize?{query_string}"
+    logging.debug(f"Redirecting to: {auth_url}")
     return JSONResponse(content={"url": auth_url})
 
 @app.get("/", response_class=HTMLResponse)
