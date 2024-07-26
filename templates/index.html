@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Authentication and Validation Check</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        iframe {
+            width: 100vw;
+            height: 100vh;
+            border: none;
+        }
+        #debug {
+            position: fixed;
+            top: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            max-width: 300px;
+            max-height: 200px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+    <div id="debug"></div>
+
+    <script>
+        const content = document.getElementById('content');
+        const debugElement = document.getElementById('debug');
+
+        function debug(message) {
+            console.log(message);
+            debugElement.innerHTML += message + '<br>';
+        }
+
+        function showURL(url) {
+            debug(`Showing URL: ${url}`);
+            content.innerHTML = `<iframe src="${url}"></iframe>`;
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+
+        async function checkUserStatus() {
+            try {
+                debug('Starting checkUserStatus');
+                const token = new URLSearchParams(window.location.hash.slice(1)).get('access_token') || getCookie('auth_token');
+                debug(`Token: ${token ? 'exists' : 'not found'}`);
+
+                const response = await fetch('/check_status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: token }),
+                });
+
+                debug(`Received response from server`);
+                const data = await response.json();
+                debug(`Response data: ${JSON.stringify(data)}`);
+                showURL(data.url);
+            } catch (error) {
+                debug(`Error: ${error.message}`);
+                showURL('https://www.login.com');
+            }
+        }
+
+        debug('Script started');
+        checkUserStatus();
+    </script>
+</body>
+</html>
