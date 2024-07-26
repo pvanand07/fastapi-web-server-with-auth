@@ -99,14 +99,16 @@ async def check_status(token_request: TokenRequest, response: Response):
             return JSONResponse(content={'route': '/login'})
 
     try:
-        user_email = jwt.decode(token, options={"verify_signature": False})['email']
-        logging.debug(f"Decoded email from token: {user_email}")
-    except:
-        logging.debug("Failed to decode email from token")
+        # Use Supabase client to get user information
+        user = supabase.auth.get_user(token)
+        user_email = user.user.email
+        logging.debug(f"Retrieved email from Supabase: {user_email}")
+    except Exception as e:
+        logging.debug(f"Failed to retrieve email from Supabase: {str(e)}")
         return JSONResponse(content={'route': '/login'})
 
     if not user_email:
-        logging.debug("No email in token")
+        logging.debug("No email retrieved from Supabase")
         return JSONResponse(content={'route': '/login'})
 
     logging.debug("Checking email in Supabase")
