@@ -74,42 +74,47 @@ async def waitlist(request: Request):
 
 @app.post("/check_status")
 async def check_status(token_request: TokenRequest, response: Response):
-    logging.debug(f"Received request to /check_status with token: {token_request.token}")
+    logging.debug("Received request to /check_status")
+    token = token_request.token
+    logging.debug(f"Received token: {token}")
     
-    if not token_request.token:
+    if not token:
         logging.debug("No token provided, redirecting to login")
         return JSONResponse(content={'route': '/login'})
 
     try:
-        # Try to verify JWT, if it fails, decode without verification
-        try:
-            payload = jwt.decode(token_request.token, JWT_SECRET, algorithms=['HS256'])
-        except JWTError:
-            payload = jwt.decode(token_request.token, 'dummy_key', options={"verify_signature": False,"verify_aud": False})
-        
-        user_email = payload.get('email')
-        if not user_email:
-            raise ValueError("No email in token")
-
+        # Verify the token using Supabase client
+        user = supabase.auth.get_user(token)
+        user_email = user.user.email
         logging.debug(f"Decoded email from token: {user_email}")
-
-        # Check email in Supabase
-        response = supabase.table('email_allowlist').select('email').eq('email', user_email).execute()
-        user_valid = len(response.data) > 0
-        
-        new_token = create_jwt({'authenticated': True, 'valid': user_valid})
-        content = {'url': APP_URL} if user_valid else {'route': '/waitlist'}
-
     except Exception as e:
-        logging.debug(f"Error processing token: {str(e)}")
+        logging.debug(f"Failed to decode email from token: {str(e)}")
+        return JSONResponse(content={'route': '/login'})
+
+    if not user_email:
+        logging.debug("No email in token")
+        return JSONResponse(content={'route': '/login'})
+
+    logging.debug("Checking email in Supabase")
+    response = supabase.table('email_allowlist').select('email').eq('email', user_email).execute()
+    logging.debug(f"Supabase response: {response}")
+    
+    user_authenticated = True
+    user_valid = len(response.data) > 0
+    new_token = create_jwt({'authenticated': user_authenticated, 'valid': user_valid})
+    logging.debug(f"Created new token: {new_token}")
+    
+    if user_authenticated and user_valid:
+        content = {'url': APP_URL}
+    elif user_authenticated and not user_valid:
+        content = {'route': '/waitlist'}
+    else:
         content = {'route': '/login'}
-        new_token = ''
 
     logging.debug(f"Redirecting to: {content}")
     
     response = JSONResponse(content=content)
-    if new_token:
-        response.set_cookie(key='auth_token', value=new_token, httponly=True, secure=True, samesite='strict', max_age=86400)
+    response.set_cookie(key='auth_token', value=new_token, httponly=True, secure=True, samesite='strict', max_age=86400)
     return response
 
 if __name__ == '__main__':
