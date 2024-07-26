@@ -7,3 +7,7 @@ pandas
 plotly
 groq
 openai
+Flask
+Flask-CORS
+supabase
+python-jose
