@@ -85,7 +85,7 @@ async def check_status(token_request: TokenRequest, response: Response):
         try:
             payload = jwt.decode(token_request.token, JWT_SECRET, algorithms=['HS256'])
         except JWTError:
-            payload = jwt.decode(token_request.token, options={"verify_signature": False})
+            payload = jwt.decode(token_request.token, 'dummy_key', options={"verify_signature": False})
         
         user_email = payload.get('email')
         if not user_email:
