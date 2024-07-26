@@ -50,6 +50,18 @@ def verify_jwt(token):
 class TokenRequest(BaseModel):
     token: str
 
+@app.get("/google_auth_url")
+async def google_auth_url():
+    params = {
+        'provider': 'google',
+        'redirect_to': 'http://localhost:8501',
+        'flow': 'implicit',
+        'scope': 'email profile'
+    }
+    query_string = "&".join([f"{k}={v}" for k, v in params.items()])
+    auth_url = f"{SUPABASE_URL}/auth/v1/authorize?{query_string}"
+    return JSONResponse(content={"url": auth_url})
+
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     logging.debug("Rendering index.html")
