@@ -1,0 +1,9 @@
+fastapi-cache2
+fastapi 
+uvicorn
+psutil
+matplotlib
+pandas
+plotly
+groq
+openai
