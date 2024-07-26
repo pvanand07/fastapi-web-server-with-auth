@@ -36,16 +36,21 @@
     <script>
         const content = document.getElementById('content');
         const debugElement = document.getElementById('debug');
-        const LOGIN_URL = 'https://www.login.com';
 
         function debug(message) {
             console.log(message);
             debugElement.innerHTML += message + '<br>';
         }
 
-        function showURL(url) {
-            debug(`Showing URL: ${url}`);
-            content.innerHTML = `<iframe src="${url}"></iframe>`;
+        function showContent(data) {
+            debug(`Showing content: ${JSON.stringify(data)}`);
+            if (data.url) {
+                content.innerHTML = `<iframe src="${data.url}"></iframe>`;
+            } else if (data.route) {
+                window.location.href = data.route;
+            } else {
+                debug('Invalid response data');
+            }
         }
 
         function getCookie(name) {
@@ -55,17 +60,17 @@
         }
 
         async function checkUserStatus() {
-            debug('Starting checkUserStatus');
-            const token = new URLSearchParams(window.location.hash.slice(1)).get('access_token') || getCookie('auth_token');
-            
-            if (!token) {
-                debug('Token not found in URL or cookie');
-                showURL(LOGIN_URL);
-                return;
-            }
-
-            debug('Token found, checking status with server');
             try {
+                debug('Starting checkUserStatus');
+                const token = new URLSearchParams(window.location.hash.slice(1)).get('access_token') || getCookie('auth_token');
+                debug(`Token: ${token ? 'exists' : 'not found'}`);
+
+                if (!token) {
+                    debug('No token found, redirecting to login');
+                    window.location.href = '/login';
+                    return;
+                }
+
                 const response = await fetch('/check_status', {
                     method: 'POST',
                     headers: {
@@ -74,13 +79,13 @@
                     body: JSON.stringify({ token: token }),
                 });
 
-                debug('Received response from server');
+                debug(`Received response from server`);
                 const data = await response.json();
                 debug(`Response data: ${JSON.stringify(data)}`);
-                showURL(data.url || LOGIN_URL);
+                showContent(data);
             } catch (error) {
                 debug(`Error: ${error.message}`);
-                showURL(LOGIN_URL);
+                window.location.href = '/login';
             }
         }
 
