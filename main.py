@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.templating import Jinja2Templates
 from supabase import create_client
-from jose import jwt, JWTError
+from jose import jwt
 import os
 from datetime import datetime, timedelta
 import logging
@@ -40,6 +40,12 @@ templates = Jinja2Templates(directory="templates")
 def create_jwt(payload):
     exp = datetime.utcnow() + timedelta(hours=24)
     return jwt.encode(payload, JWT_SECRET, algorithm='HS256', headers={'exp': exp})
+
+def verify_jwt(token):
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+    except:
+        return None
 
 class TokenRequest(BaseModel):
     token: str
@@ -82,13 +88,21 @@ async def check_status(token_request: TokenRequest, response: Response):
         logging.debug("No token provided, redirecting to login")
         return JSONResponse(content={'route': '/login'})
 
+    jwt_payload = verify_jwt(token)
+    if jwt_payload:
+        logging.debug(f"Valid JWT payload: {jwt_payload}")
+        if jwt_payload.get('authenticated') and jwt_payload.get('valid'):
+            return JSONResponse(content={'url': APP_URL})
+        elif jwt_payload.get('authenticated') and not jwt_payload.get('valid'):
+            return JSONResponse(content={'route': '/waitlist'})
+        else:
+            return JSONResponse(content={'route': '/login'})
+
     try:
-        # Verify the token using Supabase client
-        user = supabase.auth.get_user(token)
-        user_email = user.user.email
+        user_email = jwt.decode(token, options={"verify_signature": False})['email']
         logging.debug(f"Decoded email from token: {user_email}")
-    except Exception as e:
-        logging.debug(f"Failed to decode email from token: {str(e)}")
+    except:
+        logging.debug("Failed to decode email from token")
         return JSONResponse(content={'route': '/login'})
 
     if not user_email:
