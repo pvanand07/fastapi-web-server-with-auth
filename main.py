@@ -37,9 +37,20 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 # Initialize Jinja2Templates
 templates = Jinja2Templates(directory="templates")
 
+
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return super().default(obj)
+
 def create_jwt(payload):
     exp = datetime.utcnow() + timedelta(hours=24)
-    return jwt.encode(payload, JWT_SECRET, algorithm='HS256', headers={'exp': exp})
+    payload['exp'] = exp
+    # Use json.dumps with the custom encoder to convert datetime to string
+    json_payload = json.dumps(payload, cls=DateTimeEncoder)
+    return jwt.encode(json.loads(json_payload), JWT_SECRET, algorithm='HS256')
 
 def verify_jwt(token):
     try:
