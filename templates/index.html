@@ -32,17 +32,14 @@
 <body>
     <div id="content"></div>
     <div id="debug"></div>
-
     <script>
         const content = document.getElementById('content');
         const debugElement = document.getElementById('debug');
-
         function debug(message) {
             //console.log(message);
             //debugElement.innerHTML += message + '<br>';
             console.log("debug: ");
         }
-
         function showContent(data) {
             debug(`Showing content: ${JSON.stringify(data)}`);
             if (data.url) {
@@ -55,23 +52,29 @@
                 debug('Invalid response data');
             }
         }
-
         function setCookie(name, value, days) {
             const expires = new Date(Date.now() + days * 24 * 60 * 60 * 1000).toUTCString();
             document.cookie = `${name}=${value};expires=${expires};path=/`;
         }
-
         function getCookie(name) {
             const value = `; ${document.cookie}`;
             const parts = value.split(`; ${name}=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
         }
-
         async function checkUserStatus() {
             try {
                 debug('Starting checkUserStatus');
-                const token = new URLSearchParams(window.location.hash.slice(1)).get('access_token') || getCookie('auth_token');
+                const urlParams = new URLSearchParams(window.location.hash.slice(1));
+                const token = urlParams.get('access_token') || getCookie('auth_token');
                 debug(`Token: ${token ? 'exists' : 'not found'}`);
+
+                // Remove token from URL
+                if (urlParams.has('access_token')) {
+                    urlParams.delete('access_token');
+                    const newUrl = window.location.pathname + window.location.search + 
+                                   (urlParams.toString() ? '#' + urlParams.toString() : '');
+                    window.history.replaceState({}, document.title, newUrl);
+                }
 
                 // Check for saved URL
                 const savedUrl = getCookie('saved_url');
@@ -80,13 +83,11 @@
                     showContent({ url: savedUrl });
                     return;
                 }
-
                 if (!token) {
                     debug('No token found, redirecting to login');
                     window.location.href = '/login';
                     return;
                 }
-
                 const response = await fetch('/check_status', {
                     method: 'POST',
                     headers: {
@@ -103,7 +104,6 @@
                 window.location.href = '/login';
             }
         }
-
         debug('Script started');
         checkUserStatus();
     </script>
