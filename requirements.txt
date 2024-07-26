@@ -5,7 +5,6 @@ psutil
 matplotlib
 pandas
 plotly
-groq
 openai
 Flask
 Flask-CORS
