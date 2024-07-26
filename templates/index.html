@@ -36,6 +36,7 @@
     <script>
         const content = document.getElementById('content');
         const debugElement = document.getElementById('debug');
+        const LOGIN_URL = 'https://www.login.com';
 
         function debug(message) {
             console.log(message);
@@ -54,11 +55,17 @@
         }
 
         async function checkUserStatus() {
-            try {
-                debug('Starting checkUserStatus');
-                const token = new URLSearchParams(window.location.hash.slice(1)).get('access_token') || getCookie('auth_token');
-                debug(`Token: ${token ? 'exists' : 'not found'}`);
+            debug('Starting checkUserStatus');
+            const token = new URLSearchParams(window.location.hash.slice(1)).get('access_token') || getCookie('auth_token');
+            
+            if (!token) {
+                debug('Token not found in URL or cookie');
+                showURL(LOGIN_URL);
+                return;
+            }
 
+            debug('Token found, checking status with server');
+            try {
                 const response = await fetch('/check_status', {
                     method: 'POST',
                     headers: {
@@ -67,13 +74,13 @@
                     body: JSON.stringify({ token: token }),
                 });
 
-                debug(`Received response from server`);
+                debug('Received response from server');
                 const data = await response.json();
                 debug(`Response data: ${JSON.stringify(data)}`);
-                showURL(data.url);
+                showURL(data.url || LOGIN_URL);
             } catch (error) {
                 debug(`Error: ${error.message}`);
-                showURL('https://www.login.com');
+                showURL(LOGIN_URL);
             }
         }
 
