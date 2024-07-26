@@ -64,18 +64,18 @@
         async function checkUserStatus() {
             try {
                 debug('Starting checkUserStatus');
-                const urlParams = new URLSearchParams(window.location.hash.slice(1));
+                const hash = window.location.hash.slice(1);
+                const urlParams = new URLSearchParams(hash);
                 const token = urlParams.get('access_token') || getCookie('auth_token');
                 debug(`Token: ${token ? 'exists' : 'not found'}`);
-
-                // Remove token from URL
-                if (urlParams.has('access_token')) {
-                    urlParams.delete('access_token');
-                    const newUrl = window.location.pathname + window.location.search + 
-                                   (urlParams.toString() ? '#' + urlParams.toString() : '');
+                
+                // Remove everything after hash
+                if (window.location.hash) {
+                    const newUrl = window.location.href.split('#')[0];
                     window.history.replaceState({}, document.title, newUrl);
+                    debug('Removed hash from URL');
                 }
-
+                
                 // Check for saved URL
                 const savedUrl = getCookie('saved_url');
                 if (savedUrl) {
@@ -104,7 +104,6 @@
                 window.location.href = '/login';
             }
         }
-        debug('Script started');
         checkUserStatus();
     </script>
 </body>
