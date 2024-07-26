@@ -112,4 +112,4 @@ async def check_status(token_request: TokenRequest, response: Response):
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    uvicorn.run(app, host="0.0.0.0", port=7860, reload=True, debug=True)
