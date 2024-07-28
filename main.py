@@ -131,6 +131,14 @@ async def check_status(token_request: TokenRequest, response: Response):
     user_valid = len(response.data) > 0
     new_token = create_jwt({'authenticated': user_authenticated, 'valid': user_valid})
     logging.debug(f"Created new token: {new_token}")
+
+    # If user is authenticated but not valid, add to email_waitlist
+    if user_authenticated and not user_valid:
+        try:
+            waitlist_response = supabase.table('email_waitlist').insert({"email": user_email}).execute()
+            logging.debug(f"Added {user_email} to email_waitlist. Response: {waitlist_response}")
+        except Exception as e:
+            logging.error(f"Failed to add {user_email} to email_waitlist: {str(e)}")
     
     if user_authenticated and user_valid:
         content = {'url': APP_URL}
